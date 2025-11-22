@@ -23,7 +23,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
               <Car className="h-8 w-8 text-toyota-red" />
-              <span className="text-xl font-bold">4Runner</span>
+              <span className="text-xl font-bold">DriveIQ</span>
             </div>
             <div className="flex gap-1">
               {navItems.map(({ path, label, icon: Icon }) => (

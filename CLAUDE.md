@@ -1,8 +1,8 @@
-# 4Runner - Vehicle Management Application
+# DriveIQ - Intelligent Vehicle Management Application
 
 ## Project Overview
 
-A web application for managing a 2018 Toyota 4Runner SR5 Premium vehicle. Features include maintenance tracking, service reminders, mileage updates, and AI-powered consultation using the vehicle's owner manual.
+An intelligent web application for vehicle management. Features include maintenance tracking, service reminders, mileage updates, and AI-powered consultation using the vehicle's owner manual.
 
 ## Tech Stack
 

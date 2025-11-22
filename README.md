@@ -1,8 +1,8 @@
 <img src="https://github.com/ry-ops/4Runner/blob/main/4Runner.png" width="100%">
 
-# 4Runner
+# DriveIQ
 
-**Vehicle Management App for 2018 Toyota 4Runner SR5 Premium**
+**Intelligent Vehicle Management Application**
 
 A full-stack application for tracking maintenance, managing service reminders, and consulting your vehicle's documentation using AI-powered search.
 
