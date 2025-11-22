@@ -1,0 +1,134 @@
+import os
+import shutil
+from pathlib import Path
+from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
+from typing import List
+from pydantic import BaseModel
+
+router = APIRouter()
+
+# Upload directories
+UPLOAD_DIR = Path(__file__).parent.parent.parent.parent / "uploads"
+DOCS_DIR = Path(__file__).parent.parent.parent.parent / "docs"
+
+# Ensure directories exist
+UPLOAD_DIR.mkdir(exist_ok=True)
+DOCS_DIR.mkdir(exist_ok=True)
+
+# Allowed file types
+ALLOWED_EXTENSIONS = {".pdf"}
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+
+
+class UploadResponse(BaseModel):
+    filename: str
+    size: int
+    message: str
+
+
+class DocumentInfo(BaseModel):
+    filename: str
+    size: int
+    path: str
+    document_type: str
+
+
+def get_document_type(filename: str) -> str:
+    """Determine document type from filename."""
+    lower = filename.lower()
+    if "carfax" in lower:
+        return "carfax"
+    elif "manual" in lower:
+        return "manual"
+    elif "qrg" in lower or "quick reference" in lower:
+        return "qrg"
+    elif "maintenance" in lower:
+        return "maintenance_report"
+    else:
+        return "other"
+
+
+@router.post("/", response_model=UploadResponse)
+async def upload_document(
+    file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = None
+):
+    """Upload a vehicle document (PDF)."""
+
+    # Validate file extension
+    ext = Path(file.filename).suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File type not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+
+    # Read file content
+    content = await file.read()
+
+    # Validate file size
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB"
+        )
+
+    # Save to docs directory (where ingestion script looks)
+    file_path = DOCS_DIR / file.filename
+
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    return UploadResponse(
+        filename=file.filename,
+        size=len(content),
+        message=f"File uploaded successfully. Run document ingestion to enable AI search."
+    )
+
+
+@router.get("/", response_model=List[DocumentInfo])
+async def list_documents():
+    """List all uploaded documents."""
+    documents = []
+
+    for file_path in DOCS_DIR.glob("*.pdf"):
+        stat = file_path.stat()
+        documents.append(DocumentInfo(
+            filename=file_path.name,
+            size=stat.st_size,
+            path=str(file_path),
+            document_type=get_document_type(file_path.name)
+        ))
+
+    return sorted(documents, key=lambda d: d.filename)
+
+
+@router.delete("/{filename}")
+async def delete_document(filename: str):
+    """Delete an uploaded document."""
+    file_path = DOCS_DIR / filename
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # Security: ensure file is within docs directory
+    if not file_path.resolve().parent == DOCS_DIR.resolve():
+        raise HTTPException(status_code=400, detail="Invalid file path")
+
+    file_path.unlink()
+
+    return {"message": f"Document '{filename}' deleted successfully"}
+
+
+@router.get("/types")
+async def get_document_types():
+    """Get list of supported document types."""
+    return {
+        "types": [
+            {"id": "manual", "name": "Owner's Manual", "description": "Vehicle owner's manual"},
+            {"id": "qrg", "name": "Quick Reference Guide", "description": "Quick reference guide"},
+            {"id": "carfax", "name": "CARFAX Report", "description": "Vehicle history report"},
+            {"id": "maintenance_report", "name": "Maintenance Report", "description": "Service/maintenance records"},
+            {"id": "other", "name": "Other", "description": "Other vehicle documents"},
+        ]
+    }

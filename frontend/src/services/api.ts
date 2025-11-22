@@ -39,4 +39,24 @@ export const searchApi = {
   ask: (query: string) => api.post<{ answer: string; sources: Array<{ document: string; page: number }> }>('/search/ask', { query }).then(r => r.data),
 }
 
+// Uploads API
+export interface DocumentInfo {
+  filename: string
+  size: number
+  path: string
+  document_type: string
+}
+
+export const uploadsApi = {
+  list: () => api.get<DocumentInfo[]>('/uploads').then(r => r.data),
+  upload: (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post<{ filename: string; size: number; message: string }>('/uploads', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(r => r.data)
+  },
+  delete: (filename: string) => api.delete(`/uploads/${encodeURIComponent(filename)}`),
+}
+
 export default api

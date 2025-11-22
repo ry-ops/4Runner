@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Maintenance from './pages/Maintenance'
 import Reminders from './pages/Reminders'
 import Search from './pages/Search'
+import Documents from './pages/Documents'
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/maintenance" element={<Maintenance />} />
         <Route path="/reminders" element={<Reminders />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/documents" element={<Documents />} />
       </Routes>
     </Layout>
   )

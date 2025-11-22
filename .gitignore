@@ -52,5 +52,11 @@ frontend/build/
 logs/
 *.log
 
-# Large files (keep in docs but don't track .kwi)
+# User documents (personal/sensitive data)
+docs/*.pdf
 docs/*.kwi
+uploads/
+
+# Keep example/sample files
+!docs/.gitkeep
+!uploads/.gitkeep

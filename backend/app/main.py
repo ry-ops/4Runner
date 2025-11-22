@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import vehicle, maintenance, reminders, search
+from app.api import vehicle, maintenance, reminders, search, uploads
 from app.core.config import settings
 
 app = FastAPI(
@@ -24,6 +24,7 @@ app.include_router(vehicle.router, prefix="/api/vehicle", tags=["Vehicle"])
 app.include_router(maintenance.router, prefix="/api/maintenance", tags=["Maintenance"])
 app.include_router(reminders.router, prefix="/api/reminders", tags=["Reminders"])
 app.include_router(search.router, prefix="/api/search", tags=["Search"])
+app.include_router(uploads.router, prefix="/api/uploads", tags=["Uploads"])
 
 
 @app.get("/")

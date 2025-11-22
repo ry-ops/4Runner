@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Car, Wrench, Bell, Search } from 'lucide-react'
+import { Car, Wrench, Bell, Search, FileText } from 'lucide-react'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -12,6 +12,7 @@ export default function Layout({ children }: LayoutProps) {
     { path: '/', label: 'Dashboard', icon: Car },
     { path: '/maintenance', label: 'Maintenance', icon: Wrench },
     { path: '/reminders', label: 'Reminders', icon: Bell },
+    { path: '/documents', label: 'Documents', icon: FileText },
     { path: '/search', label: 'Ask', icon: Search },
   ]
 
