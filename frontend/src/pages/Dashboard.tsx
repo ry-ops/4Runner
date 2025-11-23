@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { format } from 'date-fns'
 import { Gauge, Calendar, DollarSign, AlertCircle } from 'lucide-react'
 import { vehicleApi, maintenanceApi, remindersApi } from '../services/api'
+import CarfaxDashboard from '../components/CarfaxDashboard'
 
 export default function Dashboard() {
   const queryClient = useQueryClient()
@@ -51,6 +52,9 @@ export default function Dashboard() {
         </h1>
         <p className="text-gray-600">{vehicle.trim} • VIN: {vehicle.vin}</p>
       </div>
+
+      {/* CARFAX Value Dashboard */}
+      <CarfaxDashboard />
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

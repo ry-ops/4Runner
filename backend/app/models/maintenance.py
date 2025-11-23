@@ -28,6 +28,9 @@ class MaintenanceRecord(Base):
     parts_used = Column(Text)  # JSON string for parts list
     notes = Column(Text)
 
+    # Documents/receipts (JSON array of file paths)
+    documents = Column(Text)  # JSON string for document paths
+
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

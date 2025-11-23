@@ -141,10 +141,9 @@ async def list_documents():
 
 @router.delete("/{filename}")
 async def delete_document(
-    filename: str,
-    current_user: dict = Depends(get_current_user)
+    filename: str
 ):
-    """Delete an uploaded document. Requires authentication."""
+    """Delete an uploaded document."""
     # Sanitize filename
     safe_filename = sanitize_filename(filename)
     if not safe_filename:

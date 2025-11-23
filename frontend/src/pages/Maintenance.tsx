@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { Plus, Trash2, FileText, Car, Edit2, X, Tag } from 'lucide-react'
+import { Plus, Trash2, FileText, Car, Edit2, X, Tag, List, Clock, Upload, Paperclip } from 'lucide-react'
 import { maintenanceApi, vehicleApi, serviceRecordsApi } from '../services/api'
 import type { MaintenanceRecord } from '../types'
 import type { ServiceRecord, ServiceRecordUpdate } from '../services/api'
+import ServiceHistoryTimeline from '../components/ServiceHistoryTimeline'
 
 export default function Maintenance() {
   const queryClient = useQueryClient()
@@ -12,6 +13,8 @@ export default function Maintenance() {
   const [editRecord, setEditRecord] = useState<MaintenanceRecord | null>(null)
   const [editServiceRecord, setEditServiceRecord] = useState<ServiceRecord | null>(null)
   const [newTag, setNewTag] = useState('')
+  const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list')
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
 
   const { data: vehicle } = useQuery({
     queryKey: ['vehicle'],
@@ -52,11 +55,22 @@ export default function Maintenance() {
   ].sort((a, b) => new Date(b.date_performed).getTime() - new Date(a.date_performed).getTime())
 
   const createRecord = useMutation({
-    mutationFn: maintenanceApi.create,
+    mutationFn: async (data: Parameters<typeof maintenanceApi.create>[0]) => {
+      const record = await maintenanceApi.create(data)
+      // Upload any selected files
+      if (selectedFiles.length > 0) {
+        for (const file of selectedFiles) {
+          await maintenanceApi.uploadDocument(record.id, file)
+        }
+      }
+      return record
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['maintenance'] })
       queryClient.invalidateQueries({ queryKey: ['maintenance-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['reminders'] })
       setShowForm(false)
+      setSelectedFiles([])
     },
   })
 
@@ -151,13 +165,40 @@ export default function Maintenance() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Maintenance Log</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-toyota-red text-white rounded-md hover:bg-red-700"
-        >
-          <Plus className="h-4 w-4" />
-          Add Record
-        </button>
+        <div className="flex items-center gap-3">
+          {/* View Toggle */}
+          <div className="flex rounded-md shadow-sm">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-l-md border ${
+                viewMode === 'list'
+                  ? 'bg-gray-100 text-gray-900 border-gray-300'
+                  : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <List className="h-4 w-4" />
+              List
+            </button>
+            <button
+              onClick={() => setViewMode('timeline')}
+              className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-r-md border-t border-r border-b ${
+                viewMode === 'timeline'
+                  ? 'bg-gray-100 text-gray-900 border-gray-300'
+                  : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <Clock className="h-4 w-4" />
+              Timeline
+            </button>
+          </div>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 px-4 py-2 bg-toyota-red text-white rounded-md hover:bg-red-700"
+          >
+            <Plus className="h-4 w-4" />
+            Add Record
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -252,6 +293,50 @@ export default function Maintenance() {
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Receipts / Documents
+              </label>
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 cursor-pointer">
+                  <Upload className="h-4 w-4" />
+                  Choose Files
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png,.gif"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        setSelectedFiles(Array.from(e.target.files))
+                      }
+                    }}
+                  />
+                </label>
+                <span className="text-sm text-gray-500">
+                  {selectedFiles.length > 0
+                    ? `${selectedFiles.length} file(s) selected`
+                    : 'PDF, JPG, PNG (max 10MB each)'}
+                </span>
+              </div>
+              {selectedFiles.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {selectedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
+                      <Paperclip className="h-3 w-3" />
+                      {file.name}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFiles(files => files.filter((_, i) => i !== index))}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex gap-3">
               <button
@@ -441,85 +526,90 @@ export default function Maintenance() {
         </div>
       )}
 
-      {/* Records List */}
-      <div className="bg-white rounded-lg shadow">
-        {allRecords.length > 0 ? (
-          <div className="divide-y">
-            {allRecords.map((record, index) => (
-              <div key={`${record.source}-${record.id}-${index}`} className="p-4 hover:bg-gray-50">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    {record.source.toLowerCase() === 'carfax' ? (
-                      <FileText className="h-5 w-5 text-blue-500 mt-0.5" />
-                    ) : (
-                      <Car className="h-5 w-5 text-gray-400 mt-0.5" />
-                    )}
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-medium capitalize">
-                          {record.maintenance_type.replace(/_/g, ' ')}
-                        </h3>
-                        {record.source.toLowerCase() === 'carfax' && (
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">CARFAX</span>
-                        )}
-                        {record.tags?.map(tag => (
-                          <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        {format(new Date(record.date_performed), 'MMM d, yyyy')} • {record.mileage?.toLocaleString() || '—'} miles
-                      </p>
-                      {record.service_provider && (
-                        <p className="text-sm text-gray-500">{record.service_provider}</p>
+      {/* Conditional View Rendering */}
+      {viewMode === 'timeline' ? (
+        <ServiceHistoryTimeline />
+      ) : (
+        /* Records List */
+        <div className="bg-white rounded-lg shadow">
+          {allRecords.length > 0 ? (
+            <div className="divide-y">
+              {allRecords.map((record, index) => (
+                <div key={`${record.source}-${record.id}-${index}`} className="p-4 hover:bg-gray-50">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      {record.source.toLowerCase() === 'carfax' ? (
+                        <FileText className="h-5 w-5 text-blue-500 mt-0.5" />
+                      ) : (
+                        <Car className="h-5 w-5 text-gray-400 mt-0.5" />
                       )}
-                      {record.notes && record.source === 'manual' && (
-                        <p className="text-sm text-gray-500 mt-1">{record.notes}</p>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-medium capitalize">
+                            {record.maintenance_type.replace(/_/g, ' ')}
+                          </h3>
+                          {record.source.toLowerCase() === 'carfax' && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">CARFAX</span>
+                          )}
+                          {record.tags?.map(tag => (
+                            <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          {format(new Date(record.date_performed), 'MMM d, yyyy')} • {record.mileage?.toLocaleString() || '—'} miles
+                        </p>
+                        {record.service_provider && (
+                          <p className="text-sm text-gray-500">{record.service_provider}</p>
+                        )}
+                        {record.notes && record.source === 'manual' && (
+                          <p className="text-sm text-gray-500 mt-1">{record.notes}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {record.cost && (
+                        <span className="font-medium mr-2">${record.cost.toFixed(2)}</span>
+                      )}
+                      {record.source !== 'manual' && 'originalRecord' in record && (
+                        <button
+                          onClick={() => setEditServiceRecord(record.originalRecord as ServiceRecord)}
+                          className="text-gray-400 hover:text-blue-500 p-1"
+                          title="Edit"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                      )}
+                      {record.source === 'manual' ? (
+                        <button
+                          onClick={() => deleteRecord.mutate(record.id)}
+                          className="text-gray-400 hover:text-red-500 p-1"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      ) : 'originalRecord' in record && (
+                        <button
+                          onClick={() => deleteServiceRecord.mutate((record.originalRecord as ServiceRecord).id)}
+                          className="text-gray-400 hover:text-red-500 p-1"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {record.cost && (
-                      <span className="font-medium mr-2">${record.cost.toFixed(2)}</span>
-                    )}
-                    {record.source !== 'manual' && 'originalRecord' in record && (
-                      <button
-                        onClick={() => setEditServiceRecord(record.originalRecord as ServiceRecord)}
-                        className="text-gray-400 hover:text-blue-500 p-1"
-                        title="Edit"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                    )}
-                    {record.source === 'manual' ? (
-                      <button
-                        onClick={() => deleteRecord.mutate(record.id)}
-                        className="text-gray-400 hover:text-red-500 p-1"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    ) : 'originalRecord' in record && (
-                      <button
-                        onClick={() => deleteServiceRecord.mutate((record.originalRecord as ServiceRecord).id)}
-                        className="text-gray-400 hover:text-red-500 p-1"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-8 text-center text-gray-500">
-            No maintenance records yet. Add your first record above or import a CARFAX report.
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center text-gray-500">
+              No maintenance records yet. Add your first record above or import a CARFAX report.
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

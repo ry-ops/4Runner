@@ -19,6 +19,7 @@ class MaintenanceCreate(MaintenanceBase):
     location: Optional[str] = None
     parts_used: Optional[str] = None
     notes: Optional[str] = None
+    documents: Optional[str] = None  # JSON array of file paths
 
 
 class MaintenanceUpdate(BaseModel):
@@ -33,6 +34,7 @@ class MaintenanceUpdate(BaseModel):
     location: Optional[str] = None
     parts_used: Optional[str] = None
     notes: Optional[str] = None
+    documents: Optional[str] = None  # JSON array of file paths
 
 
 class MaintenanceResponse(MaintenanceBase):
@@ -45,6 +47,7 @@ class MaintenanceResponse(MaintenanceBase):
     location: Optional[str] = None
     parts_used: Optional[str] = None
     notes: Optional[str] = None
+    documents: Optional[str] = None  # JSON array of file paths
     created_at: datetime
     updated_at: Optional[datetime] = None
 

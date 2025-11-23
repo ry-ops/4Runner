@@ -10,10 +10,14 @@ A full-stack application for tracking maintenance, managing service reminders, a
 
 ## Features
 
-- **Dashboard** - Vehicle overview with mileage tracking and maintenance stats
-- **Maintenance Log** - Record oil changes, tire rotations, brake service, and more
+- **Dashboard** - Vehicle overview with mileage tracking, maintenance stats, and total spent KPI
+- **Maintenance Log** - Record oil changes, tire rotations, brake service, and more with cost tracking
+- **Receipt/Document Uploads** - Attach PDFs, images, and receipts to maintenance records
 - **Service Records** - Import CARFAX reports and track complete service history
 - **Smart Reminders** - Date and mileage-based alerts with recurring support
+  - Auto-generate reminders from maintenance schedule
+  - Auto-create maintenance log when reminders are completed
+  - Auto-sync reminders when maintenance records are created
 - **AI Consultation** - Ask questions about your vehicle using natural language
 - **Document Search** - Semantic search across owner's manual, QRG, and service records
 - **MoE System** - Mixture of Experts routing to specialized vehicle knowledge domains
@@ -157,10 +161,14 @@ DriveIQ/
 
 ### Maintenance
 - `GET /api/maintenance` - List all maintenance records
-- `POST /api/maintenance` - Create new record
+- `POST /api/maintenance` - Create new record (auto-syncs with reminders)
 - `PATCH /api/maintenance/{id}` - Update record
 - `DELETE /api/maintenance/{id}` - Delete record
 - `GET /api/maintenance/types/summary` - Get summary by type
+- `POST /api/maintenance/{id}/documents` - Upload receipt/document
+- `GET /api/maintenance/{id}/documents` - List documents for record
+- `GET /api/maintenance/{id}/documents/{filename}/download` - Download document
+- `DELETE /api/maintenance/{id}/documents/{filename}` - Delete document
 
 ### Service Records (CARFAX)
 - `POST /api/import/carfax` - Import CARFAX PDF

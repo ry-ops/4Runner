@@ -13,6 +13,12 @@ export const vehicleApi = {
 }
 
 // Maintenance API
+export interface MaintenanceDocument {
+  filename: string
+  size: number
+  path: string
+}
+
 export const maintenanceApi = {
   getAll: (type?: string) => api.get<MaintenanceRecord[]>('/maintenance', { params: { maintenance_type: type } }).then(r => r.data),
   get: (id: number) => api.get<MaintenanceRecord>(`/maintenance/${id}`).then(r => r.data),
@@ -20,6 +26,16 @@ export const maintenanceApi = {
   update: (id: number, data: Partial<MaintenanceRecord>) => api.patch<MaintenanceRecord>(`/maintenance/${id}`, data).then(r => r.data),
   delete: (id: number) => api.delete(`/maintenance/${id}`),
   getSummary: () => api.get<MaintenanceSummary[]>('/maintenance/types/summary').then(r => r.data),
+  // Document management
+  uploadDocument: (recordId: number, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post<MaintenanceRecord>(`/maintenance/${recordId}/documents`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(r => r.data)
+  },
+  getDocuments: (recordId: number) => api.get<MaintenanceDocument[]>(`/maintenance/${recordId}/documents`).then(r => r.data),
+  deleteDocument: (recordId: number, filename: string) => api.delete(`/maintenance/${recordId}/documents/${encodeURIComponent(filename)}`),
 }
 
 // Reminders API

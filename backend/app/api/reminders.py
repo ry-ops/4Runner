@@ -5,6 +5,8 @@ from datetime import datetime
 
 from app.core.database import get_db
 from app.models.reminder import Reminder
+from app.models.maintenance import MaintenanceRecord
+from app.models.vehicle import Vehicle
 from app.schemas.reminder import ReminderCreate, ReminderUpdate, ReminderResponse
 from app.services.reminder_generator import (
     generate_smart_reminders,
@@ -163,18 +165,44 @@ def update_reminder(
 
 
 @router.post("/{reminder_id}/complete", response_model=ReminderResponse)
-def complete_reminder(reminder_id: int, db: Session = Depends(get_db)):
-    """Mark a reminder as complete."""
+def complete_reminder(
+    reminder_id: int,
+    mileage: int = None,
+    cost: float = None,
+    service_provider: str = None,
+    notes: str = None,
+    db: Session = Depends(get_db)
+):
+    """Mark a reminder as complete and create a maintenance log entry."""
+    from datetime import date, timedelta
+
     db_reminder = db.query(Reminder).filter(Reminder.id == reminder_id).first()
     if not db_reminder:
         raise HTTPException(status_code=404, detail="Reminder not found")
+
+    # Get vehicle's current mileage if not provided
+    if mileage is None:
+        vehicle = db.query(Vehicle).filter(Vehicle.id == db_reminder.vehicle_id).first()
+        mileage = vehicle.current_mileage if vehicle else db_reminder.due_mileage or 0
+
+    # Create maintenance log entry
+    maintenance_record = MaintenanceRecord(
+        vehicle_id=db_reminder.vehicle_id,
+        maintenance_type=db_reminder.title,
+        description=db_reminder.description or f"Completed from reminder: {db_reminder.title}",
+        date_performed=date.today(),
+        mileage=mileage,
+        cost=cost,
+        service_provider=service_provider,
+        notes=notes or "Created automatically from completed reminder"
+    )
+    db.add(maintenance_record)
 
     db_reminder.is_completed = True
     db_reminder.completed_at = datetime.utcnow()
 
     # If recurring, create next reminder
     if db_reminder.is_recurring:
-        from datetime import timedelta
         new_reminder = Reminder(
             vehicle_id=db_reminder.vehicle_id,
             title=db_reminder.title,
@@ -190,8 +218,9 @@ def complete_reminder(reminder_id: int, db: Session = Depends(get_db)):
         if db_reminder.recurrence_interval_days and db_reminder.due_date:
             new_reminder.due_date = db_reminder.due_date + timedelta(days=db_reminder.recurrence_interval_days)
 
-        if db_reminder.recurrence_interval_miles and db_reminder.due_mileage:
-            new_reminder.due_mileage = db_reminder.due_mileage + db_reminder.recurrence_interval_miles
+        if db_reminder.recurrence_interval_miles:
+            # Use current mileage for recurring mileage-based reminders
+            new_reminder.due_mileage = mileage + db_reminder.recurrence_interval_miles
 
         db.add(new_reminder)
 

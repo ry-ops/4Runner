@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useRef } from 'react'
 import { Upload, FileText, Trash2, AlertCircle, CheckCircle } from 'lucide-react'
 import { uploadsApi, DocumentInfo } from '../services/api'
+import CarfaxImport from '../components/CarfaxImport'
 
 export default function Documents() {
   const queryClient = useQueryClient()
@@ -86,6 +87,9 @@ export default function Documents() {
           Upload your vehicle manuals, CARFAX reports, and other documents for AI-powered search.
         </p>
       </div>
+
+      {/* CARFAX Import Section */}
+      <CarfaxImport />
 
       {/* Upload Area */}
       <div className="bg-white rounded-lg shadow p-6">
