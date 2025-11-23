@@ -56,7 +56,11 @@ logs/
 docs/*.pdf
 docs/*.kwi
 uploads/
+carfax_reports/
+page_images/
+receipts/
 
 # Keep example/sample files
 !docs/.gitkeep
 !uploads/.gitkeep
+!carfax_reports/.gitkeep

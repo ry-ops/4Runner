@@ -46,11 +46,38 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          {vehicle.year} {vehicle.make} {vehicle.model}
-        </h1>
-        <p className="text-gray-600">{vehicle.trim} • VIN: {vehicle.vin}</p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {vehicle.year} {vehicle.make} {vehicle.model}
+          </h1>
+          <p className="text-gray-600">{vehicle.trim} • VIN: {vehicle.vin}</p>
+        </div>
+
+        {/* Update Mileage */}
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <input
+              type="number"
+              value={mileageInput}
+              onChange={(e) => setMileageInput(e.target.value)}
+              placeholder="Update mileage"
+              className="w-40 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-toyota-red focus:border-transparent"
+            />
+            <button
+              onClick={() => updateMileage.mutate(parseInt(mileageInput))}
+              disabled={!mileageInput || updateMileage.isPending}
+              className="px-4 py-2 text-sm bg-toyota-red text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+            >
+              Update
+            </button>
+          </div>
+          {vehicle.last_mileage_update && (
+            <p className="text-xs text-gray-500 text-right">
+              Last updated: {format(new Date(vehicle.last_mileage_update), 'MMM d, yyyy')}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* CARFAX Value Dashboard */}
@@ -101,32 +128,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Update Mileage */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold mb-4">Update Mileage</h2>
-        <div className="flex gap-4">
-          <input
-            type="number"
-            value={mileageInput}
-            onChange={(e) => setMileageInput(e.target.value)}
-            placeholder="Enter current mileage"
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-toyota-red focus:border-transparent"
-          />
-          <button
-            onClick={() => updateMileage.mutate(parseInt(mileageInput))}
-            disabled={!mileageInput || updateMileage.isPending}
-            className="px-6 py-2 bg-toyota-red text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-          >
-            Update
-          </button>
-        </div>
-        {vehicle.last_mileage_update && (
-          <p className="mt-2 text-sm text-gray-500">
-            Last updated: {format(new Date(vehicle.last_mileage_update), 'MMM d, yyyy h:mm a')}
-          </p>
-        )}
       </div>
 
       {/* Upcoming Reminders */}
