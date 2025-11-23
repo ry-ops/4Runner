@@ -6,8 +6,66 @@ from datetime import datetime
 from app.core.database import get_db
 from app.models.reminder import Reminder
 from app.schemas.reminder import ReminderCreate, ReminderUpdate, ReminderResponse
+from app.services.reminder_generator import (
+    generate_smart_reminders,
+    create_reminder_from_schedule,
+    auto_generate_all_reminders
+)
+from app.data.maintenance_schedule import get_all_maintenance_items
 
 router = APIRouter()
+
+
+@router.get("/smart")
+def get_smart_reminders(
+    current_mileage: int,
+    db: Session = Depends(get_db)
+):
+    """Get smart reminders based on maintenance schedule and service history."""
+    reminders = generate_smart_reminders(db, current_mileage)
+    return reminders
+
+
+@router.get("/schedule")
+def get_maintenance_schedule():
+    """Get the Toyota maintenance schedule."""
+    schedule = get_all_maintenance_items()
+    return [
+        {
+            "key": key,
+            **item
+        }
+        for key, item in schedule.items()
+    ]
+
+
+@router.post("/auto-generate")
+def auto_generate_reminders(
+    vehicle_id: int,
+    current_mileage: int,
+    db: Session = Depends(get_db)
+):
+    """Auto-generate reminders for all maintenance items based on service history."""
+    created = auto_generate_all_reminders(db, vehicle_id, current_mileage)
+    return {
+        "message": f"Created {len(created)} reminders",
+        "reminders": created
+    }
+
+
+@router.post("/from-schedule")
+def create_reminder_from_maintenance_schedule(
+    vehicle_id: int,
+    service_key: str,
+    current_mileage: int,
+    db: Session = Depends(get_db)
+):
+    """Create a reminder from a specific maintenance schedule item."""
+    try:
+        reminder = create_reminder_from_schedule(db, vehicle_id, service_key, current_mileage)
+        return reminder
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/", response_model=List[ReminderResponse])

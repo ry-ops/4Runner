@@ -108,6 +108,20 @@ def route_query(query: str) -> Tuple[QueryType, str]:
     return query_type, expert_prompt
 
 
+# Mapping of expert types to document topics for filtered retrieval
+EXPERT_TOPICS = {
+    QueryType.MAINTENANCE: ["maintenance", "operation"],
+    QueryType.TECHNICAL: ["technical", "features", "operation"],
+    QueryType.SAFETY: ["safety", "operation"],
+    QueryType.GENERAL: ["general", "operation", "features"]
+}
+
+
+def get_expert_topics(query_type: QueryType) -> list:
+    """Get the relevant topics for an expert type."""
+    return EXPERT_TOPICS.get(query_type, ["general"])
+
+
 async def ask_expert(query: str, context: str) -> dict:
     """Ask a question using the appropriate expert with Claude AI."""
     if not settings.ANTHROPIC_API_KEY:

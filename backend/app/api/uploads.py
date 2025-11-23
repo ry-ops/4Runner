@@ -3,10 +3,14 @@ import shutil
 import re
 from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 from typing import List
 from pydantic import BaseModel
 
 from app.core.security import get_current_user
+from app.core.database import get_db
+from app.services.document_ingestion import ingest_all_documents, ingest_document
 
 router = APIRouter()
 
@@ -171,4 +175,55 @@ async def get_document_types():
             {"id": "maintenance_report", "name": "Maintenance Report", "description": "Service/maintenance records"},
             {"id": "other", "name": "Other", "description": "Other vehicle documents"},
         ]
+    }
+
+
+@router.post("/ingest")
+async def ingest_documents(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Ingest all uploaded documents into the vector database with topic tagging."""
+    results = ingest_all_documents(db, str(DOCS_DIR))
+
+    total_chunks = sum(v for v in results.values() if isinstance(v, int))
+
+    return {
+        "message": f"Ingestion complete. {total_chunks} chunks created from {len(results)} documents.",
+        "documents": results
+    }
+
+
+@router.get("/ingest/status")
+async def get_ingestion_status(
+    db: Session = Depends(get_db)
+):
+    """Get current ingestion status and document chunk statistics."""
+    # Get total chunks
+    total = db.execute(text("SELECT COUNT(*) FROM document_chunks")).scalar() or 0
+
+    # Get chunks by document
+    by_document = db.execute(
+        text("""
+        SELECT document_name, COUNT(*) as chunks
+        FROM document_chunks
+        GROUP BY document_name
+        ORDER BY document_name
+        """)
+    ).fetchall()
+
+    # Get chunks by topic
+    by_topic = db.execute(
+        text("""
+        SELECT unnest(topics) as topic, COUNT(*) as chunks
+        FROM document_chunks
+        GROUP BY topic
+        ORDER BY chunks DESC
+        """)
+    ).fetchall()
+
+    return {
+        "total_chunks": total,
+        "by_document": {r.document_name: r.chunks for r in by_document},
+        "by_topic": {r.topic: r.chunks for r in by_topic}
     }

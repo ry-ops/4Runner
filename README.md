@@ -1,4 +1,4 @@
-<img src="https://github.com/ry-ops/4Runner/blob/main/4Runner.png" width="100%">
+<img src="https://github.com/ry-ops/DriveIQ/blob/main/4Runner.png" width="100%">
 
 # DriveIQ
 
@@ -12,9 +12,11 @@ A full-stack application for tracking maintenance, managing service reminders, a
 
 - **Dashboard** - Vehicle overview with mileage tracking and maintenance stats
 - **Maintenance Log** - Record oil changes, tire rotations, brake service, and more
+- **Service Records** - Import CARFAX reports and track complete service history
 - **Smart Reminders** - Date and mileage-based alerts with recurring support
 - **AI Consultation** - Ask questions about your vehicle using natural language
 - **Document Search** - Semantic search across owner's manual, QRG, and service records
+- **MoE System** - Mixture of Experts routing to specialized vehicle knowledge domains
 
 ## Tech Stack
 
@@ -22,8 +24,8 @@ A full-stack application for tracking maintenance, managing service reminders, a
 |-------|------------|
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS, TanStack Query |
 | Backend | FastAPI, Python 3.11+, SQLAlchemy, Pydantic |
-| Database | PostgreSQL 16, pgvector |
-| AI | OpenAI Embeddings (text-embedding-ada-002), GPT-4 |
+| Database | PostgreSQL 15+, pgvector |
+| AI | Claude AI (Anthropic), Local Embeddings (sentence-transformers) |
 
 ---
 
@@ -32,25 +34,40 @@ A full-stack application for tracking maintenance, managing service reminders, a
 ### 1. Clone and Setup Database
 
 ```bash
-git clone https://github.com/ry-ops/4Runner.git
-cd 4Runner
+git clone https://github.com/ry-ops/DriveIQ.git
+cd DriveIQ
 
-# Run database setup (installs PostgreSQL + pgvector if needed)
-./scripts/setup-db.sh
+# Install PostgreSQL (macOS)
+brew install postgresql@15
+brew services start postgresql@15
+
+# Create database
+createdb driveiq
+psql driveiq < database/init.sql
 ```
 
 ### 2. Configure Environment
 
-```bash
-cp .env.example .env
-# Edit .env with your OpenAI API key
-```
+Create `backend/.env`:
 
-Or create `.env` manually:
 ```env
-DATABASE_URL=postgresql://localhost/fourrunner
-OPENAI_API_KEY=sk-your-openai-api-key
-SECRET_KEY=your-secret-key-for-jwt
+# Database
+DATABASE_URL=postgresql://localhost/driveiq
+
+# Security
+SECRET_KEY=your-secret-key-change-in-production
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# AI APIs
+ANTHROPIC_API_KEY=your-anthropic-api-key
+
+# Vehicle Info
+VEHICLE_VIN=YOUR_VIN_HERE
+VEHICLE_YEAR=2018
+VEHICLE_MAKE=Toyota
+VEHICLE_MODEL=4Runner
+VEHICLE_TRIM=SR5 Premium
 ```
 
 ### 3. Start Backend
@@ -65,6 +82,8 @@ uvicorn app.main:app --reload
 
 Backend runs at: http://localhost:8000
 
+**Default credentials**: admin / driveiq2024
+
 ### 4. Start Frontend
 
 ```bash
@@ -75,31 +94,35 @@ npm run dev
 
 Frontend runs at: http://localhost:3000
 
-### 5. Ingest Vehicle Documents (Optional)
+### 5. Ingest Vehicle Documents
 
 ```bash
-# Requires OPENAI_API_KEY in .env
+# Place PDFs in /docs directory
 python scripts/ingest_documents.py
 ```
 
-This processes the PDFs in `/docs` and creates vector embeddings for AI search.
+This processes the PDFs in `/docs` and creates vector embeddings for AI search using local sentence-transformers (no API key required for embeddings).
 
 ---
 
 ## Project Structure
 
 ```
-4Runner/
+DriveIQ/
 ├── backend/                 # FastAPI application
 │   ├── app/
 │   │   ├── api/            # Route handlers
+│   │   │   ├── auth.py
 │   │   │   ├── vehicle.py
 │   │   │   ├── maintenance.py
 │   │   │   ├── reminders.py
-│   │   │   └── search.py
-│   │   ├── core/           # Config, database
+│   │   │   ├── search.py
+│   │   │   ├── moe.py
+│   │   │   └── import_data.py
+│   │   ├── core/           # Config, database, security
 │   │   ├── models/         # SQLAlchemy models
-│   │   └── schemas/        # Pydantic schemas
+│   │   ├── schemas/        # Pydantic schemas
+│   │   └── services/       # Business logic
 │   └── requirements.txt
 ├── frontend/               # React application
 │   ├── src/
@@ -115,13 +138,17 @@ This processes the PDFs in `/docs` and creates vector embeddings for AI search.
 │   ├── 4Runner QRG.pdf
 │   └── CARFAX Report.pdf
 └── scripts/
-    ├── setup-db.sh        # Database setup
     └── ingest_documents.py # PDF embedding ingestion
 ```
 
 ---
 
 ## API Endpoints
+
+### Authentication
+- `POST /api/auth/login` - Login with username/password
+- `POST /api/auth/register` - Register new user
+- `GET /api/auth/me` - Get current user info
 
 ### Vehicle
 - `GET /api/vehicle` - Get vehicle information
@@ -135,6 +162,12 @@ This processes the PDFs in `/docs` and creates vector embeddings for AI search.
 - `DELETE /api/maintenance/{id}` - Delete record
 - `GET /api/maintenance/types/summary` - Get summary by type
 
+### Service Records (CARFAX)
+- `POST /api/import/carfax` - Import CARFAX PDF
+- `GET /api/import/service-records` - List all service records
+- `POST /api/import/service-record` - Add manual service record
+- `GET /api/import/kpis` - Get maintenance KPIs
+
 ### Reminders
 - `GET /api/reminders` - List reminders
 - `GET /api/reminders/upcoming` - Get due/upcoming reminders
@@ -142,26 +175,17 @@ This processes the PDFs in `/docs` and creates vector embeddings for AI search.
 - `POST /api/reminders/{id}/complete` - Mark complete (handles recurrence)
 - `DELETE /api/reminders/{id}` - Delete reminder
 
-### Search
+### Search & AI
 - `POST /api/search` - Semantic search in documents
-- `POST /api/search/ask` - AI-powered Q&A
+- `POST /api/search/ask` - AI-powered Q&A with Claude
+
+### MoE (Mixture of Experts)
+- `POST /api/moe/ask` - Ask with automatic expert routing
+- `POST /api/moe/feedback` - Submit response feedback
+- `GET /api/moe/stats` - Get performance statistics
+- `GET /api/moe/experts` - List available experts
 
 **API Documentation**: http://localhost:8000/docs
-
----
-
-## Vehicle Information
-
-| Field | Value |
-|-------|-------|
-| VIN | XXXXXXXXXXXXXXXXX |
-| Year | 2018 |
-| Make | Toyota |
-| Model | 4Runner |
-| Trim | SR5 Premium |
-| Engine | 4.0L V6 DOHC 24V |
-| Transmission | 5-Speed Automatic |
-| Drivetrain | 4WD |
 
 ---
 
@@ -171,18 +195,39 @@ This processes the PDFs in `/docs` and creates vector embeddings for AI search.
 
 - **vehicles** - Vehicle info, VIN, mileage tracking
 - **maintenance_records** - Service history with costs and notes
+- **maintenance_logs** - CARFAX imports and manual service records
 - **reminders** - Date/mileage-based alerts with recurrence
-- **document_chunks** - Vectorized PDF content (1536-dim embeddings)
+- **document_chunks** - Vectorized PDF content (384-dim embeddings)
 
 ### pgvector
 
 Uses cosine similarity for semantic search:
 ```sql
-SELECT content, 1 - (embedding <=> query_embedding) as score
+SELECT content, 1 - (embedding <=> CAST(:embedding AS vector)) as score
 FROM document_chunks
-ORDER BY embedding <=> query_embedding
+ORDER BY embedding <=> CAST(:embedding AS vector)
 LIMIT 5;
 ```
+
+---
+
+## AI Architecture
+
+### Local Embeddings
+- Model: `all-MiniLM-L6-v2` (sentence-transformers)
+- Dimensions: 384
+- No API key required for embeddings
+
+### Claude AI
+- Model: `claude-sonnet-4-20250514`
+- Used for: Q&A reasoning, expert responses
+- Requires: Anthropic API key
+
+### MoE Experts
+- **Maintenance Expert** - Service intervals, fluid specs, routine maintenance
+- **Technical Expert** - Engine specs, towing capacity, electrical systems
+- **Safety Expert** - Safety features, warnings, recalls, emergencies
+- **General Assistant** - General vehicle questions
 
 ---
 
@@ -193,7 +238,7 @@ LIMIT 5;
 - macOS (for Homebrew setup) or manual PostgreSQL installation
 - Python 3.11+
 - Node.js 18+
-- OpenAI API key
+- Anthropic API key
 
 ### Running Tests
 
@@ -207,11 +252,6 @@ cd frontend
 npm test
 ```
 
-### Code Style
-
-- **Backend**: Black, isort, mypy
-- **Frontend**: ESLint, Prettier
-
 ---
 
 ## Deployment
@@ -219,16 +259,10 @@ npm test
 ### Environment Variables (Production)
 
 ```env
-DATABASE_URL=postgresql://user:pass@host:5432/fourrunner
-OPENAI_API_KEY=sk-...
+DATABASE_URL=postgresql://user:pass@host:5432/driveiq
+ANTHROPIC_API_KEY=sk-ant-...
 SECRET_KEY=<generate-secure-key>
 CORS_ORIGINS=["https://yourdomain.com"]
-```
-
-### Docker (Optional)
-
-```bash
-docker-compose up -d
 ```
 
 ---

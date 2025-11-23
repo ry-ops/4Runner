@@ -39,6 +39,51 @@ export const searchApi = {
   ask: (query: string) => api.post<{ answer: string; sources: Array<{ document: string; page: number }> }>('/search/ask', { query }).then(r => r.data),
 }
 
+// Service Records API (CARFAX imports)
+export interface ServiceRecord {
+  id: number
+  date: string
+  mileage: number | null
+  service_type: string
+  description: string | null
+  category: string
+  source: string
+  location: string | null
+  tags: string[]
+}
+
+export interface ServiceRecordUpdate {
+  date?: string
+  mileage?: number
+  service_type?: string
+  description?: string
+  category?: string
+  source?: string
+  location?: string
+  tags?: string[]
+}
+
+export const serviceRecordsApi = {
+  getAll: () => api.get<ServiceRecord[]>('/import/service-records').then(r => r.data),
+  get: (id: number) => api.get<ServiceRecord>(`/import/service-records/${id}`).then(r => r.data),
+  update: (id: number, data: ServiceRecordUpdate) => {
+    const params = new URLSearchParams()
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (key === 'tags' && Array.isArray(value)) {
+          value.forEach(tag => params.append('tags', tag))
+        } else {
+          params.append(key, String(value))
+        }
+      }
+    })
+    return api.patch(`/import/service-records/${id}?${params.toString()}`).then(r => r.data)
+  },
+  delete: (id: number) => api.delete(`/import/service-records/${id}`),
+  getKPIs: () => api.get('/import/kpis').then(r => r.data),
+  getTags: () => api.get<string[]>('/import/tags').then(r => r.data),
+}
+
 // Uploads API
 export interface DocumentInfo {
   filename: string
