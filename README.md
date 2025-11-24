@@ -1,6 +1,21 @@
 <img src="https://github.com/ry-ops/DriveIQ/blob/main/4Runner.png" width="100%">
 
 # DriveIQ
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/ry-ops/DriveIQ?color=4A90E2&label=Release&style=for-the-badge" alt="Latest Release">
+  <img src="https://img.shields.io/github/license/ry-ops/DriveIQ?color=7ED321&style=for-the-badge" alt="License">
+  <img src="https://img.shields.io/github/issues/ry-ops/DriveIQ?color=F5A623&style=for-the-badge" alt="Issues">
+  <img src="https://img.shields.io/github/actions/workflow/status/ry-ops/DriveIQ/ci.yaml?label=CI&style=for-the-badge" alt="CI Status">
+  <img src="https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python Versions">
+</p>
+
+---
+
+<p align="center">
+  <strong>🔍 DriveIQ — Intelligent Drive Data Processing</strong><br>
+  Clean insights. Structured outputs. Automation-ready.
+</p>
+
 
 **Intelligent Vehicle Management Application**
 
