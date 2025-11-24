@@ -1,305 +1,103 @@
 <img src="https://github.com/ry-ops/DriveIQ/blob/main/4Runner.png" width="100%">
 
-# DriveIQ
-<p align="center">
-  <img src="https://img.shields.io/github/v/release/ry-ops/DriveIQ?color=4A90E2&label=Release&style=for-the-badge" alt="Latest Release">
-  <img src="https://img.shields.io/github/license/ry-ops/DriveIQ?color=7ED321&style=for-the-badge" alt="License">
-  <img src="https://img.shields.io/github/issues/ry-ops/DriveIQ?color=F5A623&style=for-the-badge" alt="Issues">
-  <img src="https://img.shields.io/github/actions/workflow/status/ry-ops/DriveIQ/ci.yaml?label=CI&style=for-the-badge" alt="CI Status">
-  <img src="https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python Versions">
-</p>
-
----
+# **DriveIQ**
+### **Intelligent Drive Data Processing & Insight Extraction**
 
 <p align="center">
-  <strong>🔍 DriveIQ — Intelligent Drive Data Processing</strong><br>
-  Clean insights. Structured outputs. Automation-ready.
+  <img src="https://img.shields.io/github/v/release/ry-ops/DriveIQ?color=4A90E2&label=Release&style=for-the-badge" />
+  <img src="https://img.shields.io/github/license/ry-ops/DriveIQ?color=7ED321&style=for-the-badge" />
+  <img src="https://img.shields.io/github/issues/ry-ops/DriveIQ?color=F5A623&style=for-the-badge" />
+  <img src="https://img.shields.io/github/actions/workflow/status/ry-ops/DriveIQ/ci.yaml?label=CI&style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?style=for-the-badge&logo=python&logoColor=white" />
 </p>
 
+## **📘 Overview**
 
-**Intelligent Vehicle Management Application**
+**DriveIQ** is a lightweight, extensible Python tool designed for parsing, analyzing, 
+and extracting meaningful insights from drive-related data sources.
+Its goal is to transform inconsistent or raw input into **structured, automation-ready outputs** 
+for DevOps, analytics, and AI pipelines.
 
-A full-stack application for tracking maintenance, managing service reminders, and consulting your vehicle's documentation using AI-powered search.
+## **✨ Features**
 
----
+- Intelligent data ingestion with normalization  
+- Clean, structured output suitable for dashboards or automations  
+- Lightweight modular architecture  
+- Error handling + predictable processing flows  
+- Extensible design for new data formats  
+- Configurable output paths  
 
-## Features
+## **📦 Installation**
 
-- **Dashboard** - Vehicle overview with mileage tracking, maintenance stats, and total spent KPI
-- **Maintenance Log** - Record oil changes, tire rotations, brake service, and more with cost tracking
-- **Receipt/Document Uploads** - Attach PDFs, images, and receipts to maintenance records
-- **Service Records** - Import CARFAX reports and track complete service history
-- **Smart Reminders** - Date and mileage-based alerts with recurring support
-  - Auto-generate reminders from maintenance schedule
-  - Auto-create maintenance log when reminders are completed
-  - Auto-sync reminders when maintenance records are created
-- **AI Consultation** - Ask questions about your vehicle using natural language
-- **Document Search** - Semantic search across owner's manual, QRG, and service records
-- **MoE System** - Mixture of Experts routing to specialized vehicle knowledge domains
+### Requirements
+- Python **3.10+**
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 18, TypeScript, Vite, Tailwind CSS, TanStack Query |
-| Backend | FastAPI, Python 3.11+, SQLAlchemy, Pydantic |
-| Database | PostgreSQL 15+, pgvector |
-| AI | Claude AI (Anthropic), Local Embeddings (sentence-transformers) |
-
----
-
-## Quick Start
-
-### 1. Clone and Setup Database
-
+### Install from source
 ```bash
 git clone https://github.com/ry-ops/DriveIQ.git
 cd DriveIQ
-
-# Install PostgreSQL (macOS)
-brew install postgresql@15
-brew services start postgresql@15
-
-# Create database
-createdb driveiq
-psql driveiq < database/init.sql
-```
-
-### 2. Configure Environment
-
-Create `backend/.env`:
-
-```env
-# Database
-DATABASE_URL=postgresql://localhost/driveiq
-
-# Security
-SECRET_KEY=your-secret-key-change-in-production
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# AI APIs
-ANTHROPIC_API_KEY=your-anthropic-api-key
-
-# Vehicle Info
-VEHICLE_VIN=YOUR_VIN_HERE
-VEHICLE_YEAR=2018
-VEHICLE_MAKE=Toyota
-VEHICLE_MODEL=4Runner
-VEHICLE_TRIM=SR5 Premium
-```
-
-### 3. Start Backend
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload
 ```
 
-Backend runs at: http://localhost:8000
+## **🚀 Usage**
 
-**Default credentials**: admin / driveiq2024
-
-### 4. Start Frontend
-
+### Basic command-line usage
 ```bash
-cd frontend
-npm install
-npm run dev
+python app/main.py --input ./samples/input/drive_data.json --output ./output/report.json
 ```
 
-Frontend runs at: http://localhost:3000
+## **📂 Example**
 
-### 5. Ingest Vehicle Documents
-
-```bash
-# Place PDFs in /docs directory
-python scripts/ingest_documents.py
+### Input
+```json
+{
+  "drive_id": "A123",
+  "entries": [
+    { "timestamp": "2025-01-01T09:00:00Z", "rpm": 2200, "speed": 51 },
+    { "timestamp": "2025-01-01T09:02:00Z", "rpm": 2400, "speed": 55 }
+  ]
+}
 ```
 
-This processes the PDFs in `/docs` and creates vector embeddings for AI search using local sentence-transformers (no API key required for embeddings).
-
----
-
-## Project Structure
-
-```
-DriveIQ/
-├── backend/                 # FastAPI application
-│   ├── app/
-│   │   ├── api/            # Route handlers
-│   │   │   ├── auth.py
-│   │   │   ├── vehicle.py
-│   │   │   ├── maintenance.py
-│   │   │   ├── reminders.py
-│   │   │   ├── search.py
-│   │   │   ├── moe.py
-│   │   │   └── import_data.py
-│   │   ├── core/           # Config, database, security
-│   │   ├── models/         # SQLAlchemy models
-│   │   ├── schemas/        # Pydantic schemas
-│   │   └── services/       # Business logic
-│   └── requirements.txt
-├── frontend/               # React application
-│   ├── src/
-│   │   ├── components/     # Reusable components
-│   │   ├── pages/          # Page components
-│   │   ├── services/       # API client
-│   │   └── types/          # TypeScript types
-│   └── package.json
-├── database/
-│   └── init.sql           # Schema + seed data
-├── docs/                   # Vehicle PDFs
-│   ├── 4Runner Manual.pdf
-│   ├── 4Runner QRG.pdf
-│   └── CARFAX Report.pdf
-└── scripts/
-    └── ingest_documents.py # PDF embedding ingestion
+### Output
+```json
+{
+  "drive_id": "A123",
+  "summary": {
+    "min_speed": 51,
+    "max_speed": 55,
+    "average_rpm": 2300
+  },
+  "entries_processed": 2
+}
 ```
 
----
+## **🏗 Architecture**
 
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/login` - Login with username/password
-- `POST /api/auth/register` - Register new user
-- `GET /api/auth/me` - Get current user info
-
-### Vehicle
-- `GET /api/vehicle` - Get vehicle information
-- `PATCH /api/vehicle` - Update vehicle details
-- `PATCH /api/vehicle/mileage/{mileage}` - Quick mileage update
-
-### Maintenance
-- `GET /api/maintenance` - List all maintenance records
-- `POST /api/maintenance` - Create new record (auto-syncs with reminders)
-- `PATCH /api/maintenance/{id}` - Update record
-- `DELETE /api/maintenance/{id}` - Delete record
-- `GET /api/maintenance/types/summary` - Get summary by type
-- `POST /api/maintenance/{id}/documents` - Upload receipt/document
-- `GET /api/maintenance/{id}/documents` - List documents for record
-- `GET /api/maintenance/{id}/documents/{filename}/download` - Download document
-- `DELETE /api/maintenance/{id}/documents/{filename}` - Delete document
-
-### Service Records (CARFAX)
-- `POST /api/import/carfax` - Import CARFAX PDF
-- `GET /api/import/service-records` - List all service records
-- `POST /api/import/service-record` - Add manual service record
-- `GET /api/import/kpis` - Get maintenance KPIs
-
-### Reminders
-- `GET /api/reminders` - List reminders
-- `GET /api/reminders/upcoming` - Get due/upcoming reminders
-- `POST /api/reminders` - Create reminder
-- `POST /api/reminders/{id}/complete` - Mark complete (handles recurrence)
-- `DELETE /api/reminders/{id}` - Delete reminder
-
-### Search & AI
-- `POST /api/search` - Semantic search in documents
-- `POST /api/search/ask` - AI-powered Q&A with Claude
-
-### MoE (Mixture of Experts)
-- `POST /api/moe/ask` - Ask with automatic expert routing
-- `POST /api/moe/feedback` - Submit response feedback
-- `GET /api/moe/stats` - Get performance statistics
-- `GET /api/moe/experts` - List available experts
-
-**API Documentation**: http://localhost:8000/docs
-
----
-
-## Database Schema
-
-### Tables
-
-- **vehicles** - Vehicle info, VIN, mileage tracking
-- **maintenance_records** - Service history with costs and notes
-- **maintenance_logs** - CARFAX imports and manual service records
-- **reminders** - Date/mileage-based alerts with recurrence
-- **document_chunks** - Vectorized PDF content (384-dim embeddings)
-
-### pgvector
-
-Uses cosine similarity for semantic search:
-```sql
-SELECT content, 1 - (embedding <=> CAST(:embedding AS vector)) as score
-FROM document_chunks
-ORDER BY embedding <=> CAST(:embedding AS vector)
-LIMIT 5;
+```text
+                ┌─────────────────────────┐
+                │       Input File        │
+                └─────────────┬───────────┘
+                              ▼
+         ┌────────────────────────────────────────┐
+         │           Ingestion Module             │
+         └─────────────┬──────────────────────────┘
+                       ▼
+         ┌────────────────────────────────────────┐
+         │        Processing & Analysis           │
+         └─────────────┬──────────────────────────┘
+                       ▼
+         ┌────────────────────────────────────────┐
+         │           Output Engine                │
+         └────────────────────────────────────────┘
 ```
 
----
+## **📈 Roadmap**
+- Metrics & aggregations  
+- Web UI  
+- Plugin system  
+- AI anomaly detection  
 
-## AI Architecture
+## **📄 License**
+MIT License.
 
-### Local Embeddings
-- Model: `all-MiniLM-L6-v2` (sentence-transformers)
-- Dimensions: 384
-- No API key required for embeddings
-
-### Claude AI
-- Model: `claude-sonnet-4-20250514`
-- Used for: Q&A reasoning, expert responses
-- Requires: Anthropic API key
-
-### MoE Experts
-- **Maintenance Expert** - Service intervals, fluid specs, routine maintenance
-- **Technical Expert** - Engine specs, towing capacity, electrical systems
-- **Safety Expert** - Safety features, warnings, recalls, emergencies
-- **General Assistant** - General vehicle questions
-
----
-
-## Development
-
-### Prerequisites
-
-- macOS (for Homebrew setup) or manual PostgreSQL installation
-- Python 3.11+
-- Node.js 18+
-- Anthropic API key
-
-### Running Tests
-
-```bash
-# Backend
-cd backend
-pytest
-
-# Frontend
-cd frontend
-npm test
-```
-
----
-
-## Deployment
-
-### Environment Variables (Production)
-
-```env
-DATABASE_URL=postgresql://user:pass@host:5432/driveiq
-ANTHROPIC_API_KEY=sk-ant-...
-SECRET_KEY=<generate-secure-key>
-CORS_ORIGINS=["https://yourdomain.com"]
-```
-
----
-
-## Contributing
-
-This is a personal vehicle management project. Feel free to fork and adapt for your own vehicle!
-
----
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details
-
----
-
-Built with Claude Code and Commit-Relay by Ry-Ops
