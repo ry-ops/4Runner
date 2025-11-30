@@ -2,6 +2,8 @@
 
 # DriveIQ
 
+[![Security Scan](https://github.com/ry-ops/DriveIQ/actions/workflows/security-scan.yml/badge.svg)](https://github.com/ry-ops/DriveIQ/actions/workflows/security-scan.yml)
+
 **Intelligent Vehicle Management Application**
 
 A full-stack application for tracking maintenance, managing service reminders, and consulting your vehicle's documentation using AI-powered search.
