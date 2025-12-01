@@ -112,9 +112,9 @@ jobs:
 
       - name: Check for critical/high vulnerabilities
         run: |
-          # Filter out ignored vulnerabilities (GHSA-wj6h-64fc-37mp)
-          CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL") | select(.VulnerabilityID != "GHSA-wj6h-64fc-37mp")] | length' trivy-results.json)
-          HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH") | select(.VulnerabilityID != "GHSA-wj6h-64fc-37mp")] | length' trivy-results.json)
+          # Filter out ignored vulnerabilities (ecdsa timing attacks - no fix available)
+          CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL") | select(.VulnerabilityID != "GHSA-wj6h-64fc-37mp") | select(.VulnerabilityID != "CVE-2024-23342")] | length' trivy-results.json)
+          HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH") | select(.VulnerabilityID != "GHSA-wj6h-64fc-37mp") | select(.VulnerabilityID != "CVE-2024-23342")] | length' trivy-results.json)
 
           echo "Critical vulnerabilities: $CRITICAL"
           echo "High vulnerabilities: $HIGH"
